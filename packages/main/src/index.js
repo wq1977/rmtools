@@ -44,15 +44,21 @@ koa.use(async (ctx, next) => {
         offset += struct.sizeOf(fmt);
         const pen = stroke_data[0];
         const nsegments = stroke_data.slice(-1)[0];
-        body = `${body}\n<polyline style="fill:none;stroke:black;stroke-width:3;opacity:1" points="`;
+        if (pen !== 6) {
+          body = `${body}\n<polyline style="fill:none;stroke:black;stroke-width:3;opacity:1" points="`;
+        }
         for (let segment = 0; segment < nsegments; segment++) {
           fmt = "<ffffff";
           const [xpos, ypos, pressure, tilt, i_unk2, j_unk2] =
             struct.unpackFrom(fmt, bin, false, offset);
           offset += struct.sizeOf(fmt);
-          body = `${body}${xpos},${ypos} `;
+          if (pen !== 6) {
+            body = `${body}${xpos},${ypos} `;
+          }
         }
-        body = `${body}" />\n`;
+        if (pen !== 6) {
+          body = `${body}" />\n`;
+        }
       }
     }
     body = `${body}</g>\n`;
