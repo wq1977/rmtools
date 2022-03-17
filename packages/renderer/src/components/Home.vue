@@ -2,7 +2,10 @@
   <div>
     <p>Welcome</p>
     <div class="entry_container">
-      <div @click="path.splice(-1)" v-if="path.length > 0">..</div>
+      <div @click="goUp" v-if="path.length > 0" class="entry">
+        <i class="fa fa-folder-open"></i>
+        ..
+      </div>
       <div
         v-for="entry in allEntry.filter(
           (e) => e.parent === (path.length > 0 ? path[path.length - 1] : '')
@@ -31,13 +34,18 @@ export default defineComponent({
   },
   data() {
     return {
-      path: [],
+      path: window.pagePath || [],
     };
   },
   methods: {
+    goUp() {
+      this.path.splice(-1);
+      window.pagePath = [...this.path];
+    },
     entryclick(entry) {
       if (entry.type === "CollectionType") {
         this.path.push(entry.id);
+        window.pagePath = [...this.path];
       } else {
         this.$router.push({
           name: "Book",

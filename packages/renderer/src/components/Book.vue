@@ -4,6 +4,7 @@
     <div>
       page count: {{ extra.content ? extra.content.pageCount : "" }} markPages:
       {{ extra.markPages ? extra.markPages.length : "" }}
+      <a href="#" @click="$router.back()"> Back </a>
     </div>
     <div class="root_container">
       <div class="page_root" v-for="page in markPages" :key="page.id">
@@ -101,8 +102,8 @@ export default defineComponent({
   right: 0;
   top: 0;
   bottom: 0;
-  width: 581px;
-  height: 774px;
+  width: 100%;
+  height: 100%;
 }
 .page_root {
   display: flex;
