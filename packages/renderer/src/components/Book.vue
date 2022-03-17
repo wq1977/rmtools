@@ -33,9 +33,6 @@ export default defineComponent({
     this.entry = JSON.parse(this.$route.params.entry);
     this.extra = await this.bookinfo({ ...this.entry });
   },
-  mounted() {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "/js/pdf.worker.min.js";
-  },
   watch: {
     markPages(newv) {
       if (!newv) return;
