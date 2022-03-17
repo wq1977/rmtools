@@ -1,10 +1,9 @@
-import {app, BrowserWindow, shell} from 'electron';
-import {join} from 'path';
-import {URL} from 'url';
-
+import { app, BrowserWindow, shell } from "electron";
+import { join } from "path";
+import { URL } from "url";
 
 const isSingleInstance = app.requestSingleInstanceLock();
-const isDevelopment = import.meta.env.MODE === 'development';
+const isDevelopment = import.meta.env.MODE === "development";
 
 if (!isSingleInstance) {
   app.quit();
@@ -15,14 +14,17 @@ app.disableHardwareAcceleration();
 
 // Install "Vue.js devtools"
 if (isDevelopment) {
-  app.whenReady()
-    .then(() => import('electron-devtools-installer'))
-    .then(({default: installExtension, VUEJS3_DEVTOOLS}) => installExtension(VUEJS3_DEVTOOLS, {
-      loadExtensionOptions: {
-        allowFileAccess: true,
-      },
-    }))
-    .catch(e => console.error('Failed install extension:', e));
+  app
+    .whenReady()
+    .then(() => import("electron-devtools-installer"))
+    .then(({ default: installExtension, VUEJS3_DEVTOOLS }) =>
+      installExtension(VUEJS3_DEVTOOLS, {
+        loadExtensionOptions: {
+          allowFileAccess: true,
+        },
+      })
+    )
+    .catch((e) => console.error("Failed install extension:", e));
 }
 
 let mainWindow = null;
@@ -32,7 +34,8 @@ const createWindow = async () => {
     show: false, // Use 'ready-to-show' event to show window
     webPreferences: {
       nativeWindowOpen: true,
-      preload: join(__dirname, '../../preload/dist/index.cjs'),
+      nodeIntegration: true,
+      preload: join(__dirname, "../../preload/dist/index.cjs"),
     },
   });
 
@@ -42,12 +45,12 @@ const createWindow = async () => {
    *
    * @see https://github.com/electron/electron/issues/25012
    */
-  mainWindow.on('ready-to-show', () => {
+  mainWindow.on("ready-to-show", () => {
     mainWindow?.show();
 
-    if (isDevelopment) {
-      mainWindow?.webContents.openDevTools();
-    }
+    // if (isDevelopment) {
+    //   mainWindow?.webContents.openDevTools();
+    // }
   });
 
   /**
@@ -55,16 +58,18 @@ const createWindow = async () => {
    * Vite dev server for development.
    * `file://../renderer/index.html` for production and test
    */
-  const pageUrl = isDevelopment && import.meta.env.VITE_DEV_SERVER_URL !== undefined
-    ? import.meta.env.VITE_DEV_SERVER_URL
-    : new URL('../renderer/dist/index.html', 'file://' + __dirname).toString();
-
+  const pageUrl =
+    isDevelopment && import.meta.env.VITE_DEV_SERVER_URL !== undefined
+      ? import.meta.env.VITE_DEV_SERVER_URL
+      : new URL(
+          "../renderer/dist/index.html",
+          "file://" + __dirname
+        ).toString();
 
   await mainWindow.loadURL(pageUrl);
 };
 
- app.on('web-contents-created', (_event, contents) => {
-
+app.on("web-contents-created", (_event, contents) => {
   /**
    * Block navigation to origins not on the allowlist.
    *
@@ -73,45 +78,44 @@ const createWindow = async () => {
    *
    * @see https://www.electronjs.org/docs/latest/tutorial/security#13-disable-or-limit-navigation
    */
-  contents.on('will-navigate', (event, url) => {
-    const allowedOrigins =
-      new Set(); // Do not use insecure protocols like HTTP. https://www.electronjs.org/docs/latest/tutorial/security#1-only-load-secure-content
+  contents.on("will-navigate", (event, url) => {
+    const allowedOrigins = new Set(); // Do not use insecure protocols like HTTP. https://www.electronjs.org/docs/latest/tutorial/security#1-only-load-secure-content
     const { origin, hostname } = new URL(url);
-    const isDevLocalhost = isDevelopment && hostname === 'localhost'; // permit live reload of index.html
-    if (!allowedOrigins.has(origin) && !isDevLocalhost){
-      console.warn('Blocked navigating to an unallowed origin:', origin);
+    const isDevLocalhost = isDevelopment && hostname === "localhost"; // permit live reload of index.html
+    if (!allowedOrigins.has(origin) && !isDevLocalhost) {
+      console.warn("Blocked navigating to an unallowed origin:", origin);
       event.preventDefault();
     }
   });
 
   /**
-  * Hyperlinks to allowed sites open in the default browser.
-  *
-  * The creation of new `webContents` is a common attack vector. Attackers attempt to convince the app to create new windows,
-  * frames, or other renderer processes with more privileges than they had before; or with pages opened that they couldn't open before.
-  * You should deny any unexpected window creation.
-  *
-  * @see https://www.electronjs.org/docs/latest/tutorial/security#14-disable-or-limit-creation-of-new-windows
-  * @see https://www.electronjs.org/docs/latest/tutorial/security#15-do-not-use-openexternal-with-untrusted-content
-  */
+   * Hyperlinks to allowed sites open in the default browser.
+   *
+   * The creation of new `webContents` is a common attack vector. Attackers attempt to convince the app to create new windows,
+   * frames, or other renderer processes with more privileges than they had before; or with pages opened that they couldn't open before.
+   * You should deny any unexpected window creation.
+   *
+   * @see https://www.electronjs.org/docs/latest/tutorial/security#14-disable-or-limit-creation-of-new-windows
+   * @see https://www.electronjs.org/docs/latest/tutorial/security#15-do-not-use-openexternal-with-untrusted-content
+   */
   contents.setWindowOpenHandler(({ url }) => {
-    const allowedOrigins =
-      new Set([ // Do not use insecure protocols like HTTP. https://www.electronjs.org/docs/latest/tutorial/security#1-only-load-secure-content
-      'https://vitejs.dev',
-      'https://github.com',
-      'https://v3.vuejs.org']);
+    const allowedOrigins = new Set([
+      // Do not use insecure protocols like HTTP. https://www.electronjs.org/docs/latest/tutorial/security#1-only-load-secure-content
+      "https://vitejs.dev",
+      "https://github.com",
+      "https://v3.vuejs.org",
+    ]);
     const { origin } = new URL(url);
-    if (allowedOrigins.has(origin)){
+    if (allowedOrigins.has(origin)) {
       shell.openExternal(url);
     } else {
-      console.warn('Blocked the opening of an unallowed origin:', origin);
+      console.warn("Blocked the opening of an unallowed origin:", origin);
     }
-    return { action: 'deny' };
+    return { action: "deny" };
   });
 });
 
-
-app.on('second-instance', () => {
+app.on("second-instance", () => {
   // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -119,24 +123,22 @@ app.on('second-instance', () => {
   }
 });
 
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-
-app.whenReady()
+app
+  .whenReady()
   .then(createWindow)
-  .catch((e) => console.error('Failed create window:', e));
-
+  .catch((e) => console.error("Failed create window:", e));
 
 // Auto-updates
 if (import.meta.env.PROD) {
-  app.whenReady()
-    .then(() => import('electron-updater'))
-    .then(({autoUpdater}) => autoUpdater.checkForUpdatesAndNotify())
-    .catch((e) => console.error('Failed check updates:', e));
+  app
+    .whenReady()
+    .then(() => import("electron-updater"))
+    .then(({ autoUpdater }) => autoUpdater.checkForUpdatesAndNotify())
+    .catch((e) => console.error("Failed check updates:", e));
 }
-

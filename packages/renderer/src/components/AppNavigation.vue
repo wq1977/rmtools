@@ -1,20 +1,16 @@
 <template>
   <nav>
-    <router-link to="/">
-      Home
-    </router-link>
+    <router-link to="/"> Home </router-link>
     <span> | </span>
-    <router-link to="/about">
-      About
-    </router-link>
+    <router-link to="/rsync"> RSync </router-link>
   </nav>
 </template>
 
 <script>
-import {defineComponent} from 'vue';
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'AppNavigation',
+  name: "AppNavigation",
 });
 </script>
 
