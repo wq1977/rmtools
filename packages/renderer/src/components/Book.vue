@@ -5,7 +5,7 @@
     <div>
       markPages: {{ extra.markPages ? extra.markPages.length : "" }} :
       <div class="page_root" v-for="page in markPages" :key="page.id">
-        <span>Page {{ page.no }} {{ page.id }}</span>
+        <span style="margin-top: 1em">Page {{ page.no }}</span>
         <div class="page_container">
           <canvas :ref="`page_${page.no}`" width="200" height="300"></canvas>
           <img
@@ -104,6 +104,7 @@ export default defineComponent({
 }
 .page_root {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }

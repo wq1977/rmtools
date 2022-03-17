@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;"
+      content="script-src 'self' blob:"
     />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link href="/css/all.min.css" rel="stylesheet" />
     <script src="js/pdf.min.js"></script>
     <script>
       pdfjsLib.GlobalWorkerOptions.workerSrc = "js/pdf.worker.min.js";

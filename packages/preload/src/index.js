@@ -62,7 +62,6 @@ function penInfo(pdf, page) {
       lines.push({ pen, points });
     }
   }
-  console.log(page, lines);
   return lines;
 }
 

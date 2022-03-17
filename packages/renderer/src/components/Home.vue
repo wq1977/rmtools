@@ -1,15 +1,20 @@
 <template>
   <div>
     <p>Welcome</p>
-    <div @click="path.splice(-1)" v-if="path.length > 0">..</div>
-    <div
-      v-for="entry in allEntry.filter(
-        (e) => e.parent === (path.length > 0 ? path[path.length - 1] : '')
-      )"
-      @click="entryclick(entry)"
-      :key="entry.id"
-    >
-      {{ entry.visibleName }}
+    <div class="entry_container">
+      <div @click="path.splice(-1)" v-if="path.length > 0">..</div>
+      <div
+        v-for="entry in allEntry.filter(
+          (e) => e.parent === (path.length > 0 ? path[path.length - 1] : '')
+        )"
+        @click="entryclick(entry)"
+        :key="entry.id"
+        class="entry"
+      >
+        <i v-if="entry.type === 'CollectionType'" class="fa fa-folder-open"></i>
+        <i v-else class="fa fa-book"></i>
+        {{ entry.visibleName }}
+      </div>
     </div>
   </div>
 </template>
@@ -48,5 +53,12 @@ export default defineComponent({
 <style scoped>
 a {
   color: #42b983;
+}
+.entry_container {
+  display: flex;
+  flex-wrap: wrap;
+}
+.entry {
+  padding: 1em;
 }
 </style>
