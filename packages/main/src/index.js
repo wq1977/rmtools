@@ -2,6 +2,69 @@ import { app, BrowserWindow, shell } from "electron";
 import { join } from "path";
 import { URL } from "url";
 
+import Koa from "koa";
+import serve from "koa-static";
+const koa = new Koa();
+const cors = require("@koa/cors");
+const struct = require("python-struct");
+koa.use(cors());
+koa.use(
+  serve(require("path").join(require("os").homedir(), ".rmroot", "xochitl"))
+);
+koa.use(async (ctx, next) => {
+  if (ctx.URL.pathname === "/svg") {
+    const { pdf, page } = ctx.query;
+    console.log(pdf, page);
+    const bin = require("fs").readFileSync(
+      require("path").join(
+        require("os").homedir(),
+        ".rmroot",
+        "xochitl",
+        pdf,
+        `${page}.rm`
+      )
+    );
+    const expected_header = "reMarkable .lines file, version=5          ";
+    let fmt = `<${expected_header.length}sI`;
+    const [_, nlayers] = struct.unpack(fmt, bin);
+    let offset = struct.sizeOf(fmt);
+    const _stroke_fmt = "<IIIfII";
+    const width = 1404;
+    const height = 1872;
+    let body = `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}">`;
+    body = `${body}\n<g id="p1" style="display:inline">`;
+    for (let layer = 0; layer < nlayers; layer++) {
+      fmt = "<I";
+      const [nstrokes] = struct.unpackFrom(fmt, bin, false, offset);
+      offset += struct.sizeOf(fmt);
+      for (let stroke = 0; stroke < nstrokes; stroke++) {
+        fmt = _stroke_fmt;
+        const stroke_data = struct.unpackFrom(fmt, bin, false, offset);
+        offset += struct.sizeOf(fmt);
+        const pen = stroke_data[0];
+        const nsegments = stroke_data.slice(-1)[0];
+        body = `${body}\n<polyline style="fill:none;stroke:black;stroke-width:3;opacity:1" points="`;
+        for (let segment = 0; segment < nsegments; segment++) {
+          fmt = "<ffffff";
+          const [xpos, ypos, pressure, tilt, i_unk2, j_unk2] =
+            struct.unpackFrom(fmt, bin, false, offset);
+          offset += struct.sizeOf(fmt);
+          body = `${body}${xpos},${ypos} `;
+        }
+        body = `${body}" />\n`;
+      }
+    }
+    body = `${body}</g>\n`;
+    body = `${body}</svg>\n`;
+
+    ctx.set("Content-Type", "image/svg+xml");
+    ctx.body = body;
+    return;
+  }
+  await next();
+});
+koa.listen(8877);
+
 const isSingleInstance = app.requestSingleInstanceLock();
 const isDevelopment = import.meta.env.MODE === "development";
 
