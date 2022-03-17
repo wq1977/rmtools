@@ -14,7 +14,6 @@ koa.use(
 koa.use(async (ctx, next) => {
   if (ctx.URL.pathname === "/svg") {
     const { pdf, page } = ctx.query;
-    console.log(pdf, page);
     const bin = require("fs").readFileSync(
       require("path").join(
         require("os").homedir(),
