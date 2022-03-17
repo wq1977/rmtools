@@ -1,16 +1,45 @@
 <template>
-  <p>Welcome</p>
+  <div>
+    <p>Welcome</p>
+    <div @click="path.splice(-1)" v-if="path.length > 0">..</div>
+    <div
+      v-for="entry in allEntry.filter(
+        (e) => e.parent === (path.length > 0 ? path[path.length - 1] : '')
+      )"
+      @click="entryclick(entry)"
+      :key="entry.id"
+    >
+      {{ entry.visibleName }}
+    </div>
+  </div>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import { useElectron } from "/@/use/electron";
 
 export default defineComponent({
   name: "HelloWorld",
   setup() {
-    const count = ref(0);
-
-    return { count };
+    const { allEntry } = useElectron();
+    return { allEntry };
+  },
+  data() {
+    return {
+      path: [],
+    };
+  },
+  methods: {
+    entryclick(entry) {
+      if (entry.type === "CollectionType") {
+        this.path.push(entry.id);
+      } else {
+        this.$router.push({
+          name: "Book",
+          params: { entry: JSON.stringify(entry) },
+        });
+      }
+    },
   },
 });
 </script>

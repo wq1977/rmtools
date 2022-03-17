@@ -8,6 +8,11 @@ const routes = [
     name: "Rsync",
     component: () => import("/@/components/RSync.vue"),
   }, // Lazy load route component
+  {
+    path: "/book",
+    name: "Book",
+    component: () => import("/@/components/Book.vue"),
+  }, // Lazy load route component
 ];
 
 export default createRouter({
