@@ -1,6 +1,8 @@
 import { app, BrowserWindow, shell } from "electron";
 import { join } from "path";
 import { URL } from "url";
+const Config = require("electron-config");
+const config = new Config();
 
 import Koa from "koa";
 import serve from "koa-static";
@@ -92,14 +94,20 @@ if (isDevelopment) {
 let mainWindow = null;
 
 const createWindow = async () => {
-  mainWindow = new BrowserWindow({
-    show: false, // Use 'ready-to-show' event to show window
+  let opts = {
+    show: false,
     webPreferences: {
       nativeWindowOpen: true,
-      nodeIntegration: true,
       preload: join(__dirname, "../../preload/dist/index.cjs"),
     },
-  });
+  };
+
+  Object.assign(opts, config.get("winBounds") || {});
+  if (opts.x && opts.x < 0) opts.x = 0;
+  if (opts.y && opts.y < 0) opts.y = 0;
+  if (opts.width && opts.width < 320) opts.width = 320;
+  if (opts.height && opts.height < 240) opts.height = 240;
+  mainWindow = new BrowserWindow(opts);
 
   /**
    * If you install `show: true` then it can cause issues when trying to close the window.
@@ -113,6 +121,17 @@ const createWindow = async () => {
     // if (isDevelopment) {
     //   mainWindow?.webContents.openDevTools();
     // }
+  });
+
+  mainWindow.on("close", () => {
+    config.set("winBounds", mainWindow.getBounds());
+    if (mainWindow.isFullScreen()) {
+      config.set("mainWinState", "fullscreen");
+    } else if (mainWindow.isMaximized()) {
+      config.set("mainWinState", "maxed");
+    } else {
+      config.set("mainWinState", "normal");
+    }
   });
 
   /**
