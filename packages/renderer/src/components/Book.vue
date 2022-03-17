@@ -1,9 +1,11 @@
 <template>
   <div>
     <h2>{{ entry.visibleName }}</h2>
-    <div>page count: {{ extra.content ? extra.content.pageCount : "" }}</div>
     <div>
-      markPages: {{ extra.markPages ? extra.markPages.length : "" }} :
+      page count: {{ extra.content ? extra.content.pageCount : "" }} markPages:
+      {{ extra.markPages ? extra.markPages.length : "" }}
+    </div>
+    <div class="root_container">
       <div class="page_root" v-for="page in markPages" :key="page.id">
         <span style="margin-top: 1em">Page {{ page.no }}</span>
         <div class="page_container">
@@ -105,6 +107,13 @@ export default defineComponent({
 .page_root {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.root_container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
 }
