@@ -2,7 +2,8 @@ import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { join } from "path";
 import { URL } from "url";
 import { PDFDocument } from "pdf-lib";
-const Config = require("electron-config");
+const Config = require("electron-store");
+Config.initRenderer();
 const config = new Config();
 
 import Koa from "koa";
@@ -11,6 +12,7 @@ const koa = new Koa();
 const cors = require("@koa/cors");
 const struct = require("python-struct");
 const mime = require("mime-types");
+const fontkit = require("fontkit");
 
 koa.use(cors());
 koa.use(
@@ -77,37 +79,20 @@ koa.use(async (ctx, next) => {
 
 function fixCss(html) {
   if (html.indexOf("<body") > 0) {
-    const pathST = require("path").join(
-      __dirname,
-      "..",
-      "..",
-      "renderer",
-      "assets",
-      "fonts",
-      "FZSSJW.ttf"
-    );
-    const pathKT = require("path").join(
-      __dirname,
-      "..",
-      "..",
-      "renderer",
-      "assets",
-      "fonts",
-      "KaiTi.ttf"
-    );
     const defaultStyle = `
     <style>
-    @font-face { 
-      font-family: '方正书宋简体';
-      src: url('${pathST}');
-    }
-    @font-face {
-      font-family: '方正新楷体';
-      src: url('${pathKT}');
-    }
+    ${config
+      .get("fonts")
+      .map((font) => {
+        return `@font-face { 
+          font-family: '${font.familyName}';
+          src: url('${font.path}');
+        }`;
+      })
+      .join("\n")}    
     p{
       text-align: justify;
-      font-family:方正书宋简体;
+      font-family:${config.get("defaultFont")};
       line-height:200%;
     }
     .calibre5 {
@@ -118,11 +103,12 @@ function fixCss(html) {
     html = html.replace(/<body/i, `${defaultStyle}<body`);
   }
   html = html.replace(/line-height:.*;/g, "line-height:200%;");
-  html = html.replace(/font-family:.*STKai.*;/g, "font-family:方正新楷体;");
-  html = html.replace(/font-family:.*STSong.*;/g, "font-family:方正书宋简体;");
-  html = html.replace(/font-family:.*serif.*;/g, "font-family:方正书宋简体;");
-  html = html.replace(/font-family:.*zw.*;/g, "font-family:方正书宋简体;");
-  html = html.replace(/font-family:.*宋体.*;/g, "font-family:方正书宋简体;");
+  for (let rep of config.get("fontReplace") || []) {
+    html = html.replace(
+      new RegExp(`font-family:.*${rep.from}.*;`),
+      `font-family:${rep.to};`
+    );
+  }
   html = html.replace(/<html/i, `<html style="font-size: 12pt"`);
   return html;
 }
@@ -309,6 +295,32 @@ ipcMain.handle("select-epub", async () => {
     filters: [{ name: "epub File", extensions: ["epub"] }],
     properties: ["openFile"],
   });
+});
+
+ipcMain.handle("select-ttf", async () => {
+  const { dialog } = require("electron");
+  const path = await dialog.showOpenDialog({
+    filters: [{ name: "ttf File", extensions: ["ttf"] }],
+    properties: ["openFile"],
+  });
+  if (!path.canceled && path.filePaths.length > 0) {
+    const fonts = Array.from(
+      new Set([
+        ...path.filePaths,
+        ...(config.get("fonts") || []).map((f) => f.path).filter((e) => e),
+      ])
+    ).map((f) => {
+      const font = fontkit.openSync(f);
+      return {
+        path: f,
+        familyName: font.familyName,
+      };
+    });
+    config.set("fonts", fonts);
+    if (!config.get("defaultFont")) {
+      config.set("defaultFont", fonts[0].familyName);
+    }
+  }
 });
 
 ipcMain.handle("convert-pdf", async function (_, payload) {

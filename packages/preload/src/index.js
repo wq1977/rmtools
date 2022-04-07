@@ -8,6 +8,8 @@ var epubParser = require("epub-parser");
 const AdmZip = require("adm-zip");
 const md5 = require("md5");
 import { PDFDocument } from "pdf-lib";
+const Store = require("electron-store");
+const store = new Store();
 
 const allEntry = require("fs")
   .readdirSync(docbase)
@@ -74,6 +76,12 @@ function penInfo(pdf, page) {
  */
 const api = {
   versions: process.versions,
+  getFonts() {
+    return store.get("fonts");
+  },
+  async installFont() {
+    return await ipcRenderer.invoke("select-ttf");
+  },
 
   async selectePub() {
     return await ipcRenderer.invoke("select-epub");

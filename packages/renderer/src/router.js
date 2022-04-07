@@ -18,6 +18,11 @@ const routes = [
     name: "EPub2PDF",
     component: () => import("/@/components/EPub2PDF.vue"),
   }, // Lazy load route component
+  {
+    path: "/setting",
+    name: "Setting",
+    component: () => import("/@/components/Setting.vue"),
+  }, // Lazy load route component
 ];
 
 export default createRouter({

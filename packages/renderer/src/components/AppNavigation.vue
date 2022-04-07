@@ -5,6 +5,8 @@
     <router-link to="/rsync"> RSync </router-link>
     <span> | </span>
     <router-link to="/epub2pdf"> EPub2PDF </router-link>
+    <span> | </span>
+    <router-link to="/setting"> Setting </router-link>
   </nav>
 </template>
 
