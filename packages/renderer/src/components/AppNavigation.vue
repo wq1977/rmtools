@@ -3,6 +3,8 @@
     <router-link to="/"> Home </router-link>
     <span> | </span>
     <router-link to="/rsync"> RSync </router-link>
+    <span> | </span>
+    <router-link to="/epub2pdf"> EPub2PDF </router-link>
   </nav>
 </template>
 
