@@ -12,7 +12,6 @@ const koa = new Koa();
 const cors = require("@koa/cors");
 const struct = require("python-struct");
 const mime = require("mime-types");
-const fontkit = require("fontkit");
 
 koa.use(cors());
 koa.use(
@@ -309,10 +308,9 @@ ipcMain.handle("select-ttf", async () => {
         ...(config.get("fonts") || []).map((f) => f.path).filter((e) => e),
       ])
     ).map((f) => {
-      const font = fontkit.openSync(f);
       return {
         path: f,
-        familyName: font.familyName,
+        familyName: require("path").basename(f).slice(0, -4),
       };
     });
     config.set("fonts", fonts);

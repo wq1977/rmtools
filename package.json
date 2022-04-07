@@ -40,7 +40,6 @@
     "electron-store": "^8.0.1",
     "electron-updater": "4.6.2",
     "epub-parser": "^0.2.5",
-    "fontkit": "^1.8.1",
     "koa": "^2.13.4",
     "koa-static": "^5.0.0",
     "md5": "^2.3.0",
