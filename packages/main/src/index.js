@@ -89,15 +89,14 @@ function fixCss(html) {
           src: url('${font.path}');
         }`;
       })
-      .join("\n")}    
-    p{
-      text-align: justify;
-      font-family:${config.get("defaultFont")};
-      line-height:200%;
-    }
-    .calibre5 {
-      margin-bottom:1em;
-    }
+      .join("\n")}  
+      ${config.get("extraCss") || ""}
+      html {
+        font-family: ${
+          config.get("defaultFont") ||
+          "PingFang SC, Lantinghei SC, Microsoft Yahei, Hiragino Sans GB, Microsoft Sans Serif, WenQuanYi Micro Hei, sans-serif"
+        }
+      }  
     </style>
     `;
     html = html.replace(/<body/i, `${defaultStyle}<body`);

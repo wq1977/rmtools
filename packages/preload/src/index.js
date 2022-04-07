@@ -79,6 +79,18 @@ const api = {
   getFonts() {
     return store.get("fonts");
   },
+  getDefaultFont() {
+    return store.get("defaultFont");
+  },
+  setDefaultFont(v) {
+    store.set("defaultFont", v);
+  },
+  getExtraCSS() {
+    return store.get("extraCss") || "";
+  },
+  setExtraCSS(v) {
+    store.set("extraCss", v);
+  },
   async installFont() {
     return await ipcRenderer.invoke("select-ttf");
   },

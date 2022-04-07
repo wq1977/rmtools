@@ -6,7 +6,46 @@
       <button v-if="book" class="mr-3" @click="doDownload(book)">
         下载全书
       </button>
+      <button v-if="book" @click="showMore = !showMore" class="mr-3">
+        More
+      </button>
       <span v-if="downing">{{ dprogress }} / {{ dtotal }}</span>
+    </div>
+    <div class="p-5" v-if="showMore">
+      <table
+        class="table-auto border-collapse border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-800 shadow-sm"
+      >
+        <tr>
+          <td class="border border-slate-300">默认字体:</td>
+          <td class="border border-slate-300">
+            <select
+              v-model="defaultFont"
+              @change="setDefault"
+              class="mr-3"
+              v-if="book"
+            >
+              <option
+                :value="font.familyName"
+                :key="font.familyName"
+                v-for="font in fonts"
+              >
+                {{ font.familyName }}
+              </option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="border border-slate-300">额外样式：</td>
+          <td class="border border-slate-300">
+            <textarea
+              @change="setec"
+              v-model="extraCss"
+              rows="5"
+              class="w-96"
+            ></textarea>
+          </td>
+        </tr>
+      </table>
     </div>
     <div class="flex w-full mt-5" v-if="book">
       <div class="mr-3 w-96">
@@ -28,8 +67,28 @@
 import { useElectron } from "../use/electron";
 export default {
   setup() {
-    const { selectePub, convertePub, itemPdfPath, download } = useElectron();
-    return { selectePub, convertePub, itemPdfPath, download };
+    const {
+      selectePub,
+      convertePub,
+      itemPdfPath,
+      download,
+      getFonts,
+      getDefaultFont,
+      setDefaultFont,
+      getExtraCSS,
+      setExtraCSS,
+    } = useElectron();
+    return {
+      selectePub,
+      convertePub,
+      itemPdfPath,
+      download,
+      getFonts,
+      getDefaultFont,
+      setDefaultFont,
+      getExtraCSS,
+      setExtraCSS,
+    };
   },
   data() {
     return {
@@ -37,9 +96,23 @@ export default {
       dprogress: 0,
       dtotal: 0,
       downing: false,
+      defaultFont: this.getDefaultFont(),
+      showMore: false,
+      extraCss: this.getExtraCSS(),
     };
   },
+  computed: {
+    fonts() {
+      return this.getFonts();
+    },
+  },
   methods: {
+    setec() {
+      this.setExtraCSS(this.extraCss);
+    },
+    setDefault() {
+      this.setDefaultFont(this.defaultFont);
+    },
     async doDownload(book) {
       this.downing = true;
       await this.download(
@@ -59,10 +132,14 @@ export default {
       const result = await this.selectePub();
       if (result.filePaths.length > 0) {
         this.book = await this.convertePub(result.filePaths[0]);
+        setTimeout(() => {
+          this.openBook(
+            this.book.content[Math.floor(this.book.content.length / 2)]
+          );
+        }, 1000);
       }
     },
     async openBook(item) {
-      console.log(item);
       this.$refs.iframe.src = await this.itemPdfPath({ ...item, debug: true });
     },
   },
