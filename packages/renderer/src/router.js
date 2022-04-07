@@ -22,5 +22,6 @@ const routes = [
 
 export default createRouter({
   routes,
+  linkExactActiveClass: "font-bold",
   history: createWebHashHistory(),
 });

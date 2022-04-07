@@ -1,6 +1,7 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { join } from "path";
 import { URL } from "url";
+import { PDFDocument } from "pdf-lib";
 const Config = require("electron-config");
 const config = new Config();
 
@@ -9,10 +10,13 @@ import serve from "koa-static";
 const koa = new Koa();
 const cors = require("@koa/cors");
 const struct = require("python-struct");
+const mime = require("mime-types");
+
 koa.use(cors());
 koa.use(
   serve(require("path").join(require("os").homedir(), ".rmroot", "xochitl"))
 );
+
 koa.use(async (ctx, next) => {
   if (ctx.URL.pathname === "/svg") {
     const { pdf, page } = ctx.query;
@@ -70,6 +74,74 @@ koa.use(async (ctx, next) => {
   }
   await next();
 });
+
+function fixCss(html) {
+  if (html.indexOf("<body") > 0) {
+    const pathST = require("path").join(
+      __dirname,
+      "..",
+      "..",
+      "renderer",
+      "assets",
+      "fonts",
+      "FZSSJW.ttf"
+    );
+    const pathKT = require("path").join(
+      __dirname,
+      "..",
+      "..",
+      "renderer",
+      "assets",
+      "fonts",
+      "KaiTi.ttf"
+    );
+    const defaultStyle = `
+    <style>
+    @font-face { 
+      font-family: '方正书宋简体';
+      src: url('${pathST}');
+    }
+    @font-face {
+      font-family: '方正新楷体';
+      src: url('${pathKT}');
+    }
+    p{
+      text-align: justify;
+      font-family:方正书宋简体;
+      line-height:200%;
+    }
+    .calibre5 {
+      margin-bottom:1em;
+    }
+    </style>
+    `;
+    html = html.replace(/<body/i, `${defaultStyle}<body`);
+  }
+  html = html.replace(/line-height:.*;/g, "line-height:200%;");
+  html = html.replace(/font-family:.*STKai.*;/g, "font-family:方正新楷体;");
+  html = html.replace(/font-family:.*STSong.*;/g, "font-family:方正书宋简体;");
+  html = html.replace(/font-family:.*serif.*;/g, "font-family:方正书宋简体;");
+  html = html.replace(/font-family:.*zw.*;/g, "font-family:方正书宋简体;");
+  html = html.replace(/font-family:.*宋体.*;/g, "font-family:方正书宋简体;");
+  html = html.replace(/<html/i, `<html style="font-size: 12pt"`);
+  return html;
+}
+
+koa.use(async (ctx, next) => {
+  if (require("fs").existsSync(ctx.path)) {
+    var mimeType = mime.lookup(ctx.path);
+    console.log(ctx.path, mimeType);
+    ctx.response.set("content-type", mimeType);
+    if (ctx.path.endsWith("html") || ctx.path.endsWith("css")) {
+      ctx.body = fixCss(require("fs").readFileSync(ctx.path).toString());
+    } else {
+      ctx.body = require("fs").readFileSync(ctx.path);
+    }
+  } else {
+    await next();
+  }
+});
+
 koa.listen(8877);
 
 const isSingleInstance = app.requestSingleInstanceLock();
@@ -103,6 +175,7 @@ const createWindow = async () => {
   let opts = {
     show: false,
     webPreferences: {
+      webSecurity: false,
       nativeWindowOpen: true,
       preload: join(__dirname, "../../preload/dist/index.cjs"),
     },
@@ -229,3 +302,65 @@ if (import.meta.env.PROD) {
     .then(({ autoUpdater }) => autoUpdater.checkForUpdatesAndNotify())
     .catch((e) => console.error("Failed check updates:", e));
 }
+
+ipcMain.handle("select-epub", async () => {
+  const { dialog } = require("electron");
+  return await dialog.showOpenDialog({
+    filters: [{ name: "epub File", extensions: ["epub"] }],
+    properties: ["openFile"],
+  });
+});
+
+ipcMain.handle("convert-pdf", async function (_, payload) {
+  const { src, output } = payload;
+  const error = await new Promise(async (resolve) => {
+    let win;
+    if (payload.debug) {
+      win = new BrowserWindow({
+        webPreferences: {
+          webSecurity: false,
+        },
+      });
+    } else {
+      win = new BrowserWindow({
+        transparent: true,
+        webPreferences: {
+          webSecurity: false,
+        },
+      });
+      win.hide();
+    }
+    win.loadURL(`${src}?seed=${new Date().getTime()}`);
+    win.webContents.on("did-finish-load", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const data = await win.webContents.printToPDF({
+        marginsType: 1,
+        printBackground: true,
+        pageSize: {
+          width: 157794 - 2 * 10000,
+          height: 210392 - 2 * 10000,
+        },
+      });
+      require("fs").writeFile(output, data, (error) => {
+        if (error) resolve(error);
+        else resolve();
+        if (!payload.debug) win.close();
+      });
+    });
+  });
+  if (!error) {
+    const pdfDoc = await PDFDocument.load(require("fs").readFileSync(output));
+    const pages = pdfDoc.getPages();
+    for (let page of pages) {
+      page.setSize(
+        page.getWidth() + Math.round((72 * 2) / 2.54),
+        page.getHeight() + Math.round((72 * 2) / 2.54)
+      );
+      console.log("page size", page.getWidth(), page.getHeight());
+      page.translateContent(Math.round(72 / 2.54), Math.round(72 / 2.54));
+    }
+    require("fs").writeFileSync(output, await pdfDoc.save());
+  } else {
+    console.log("error:", error);
+  }
+});

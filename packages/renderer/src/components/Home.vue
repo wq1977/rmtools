@@ -1,6 +1,5 @@
 <template>
   <div>
-    <p>Welcome</p>
     <div class="entry_container">
       <div @click="goUp" v-if="path.length > 0" class="entry">
         <i class="fa fa-folder-open"></i>

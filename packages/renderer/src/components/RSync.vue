@@ -3,7 +3,12 @@
     <span v-if="syncing"> Syncing ... </span>
     <div v-else>
       <span v-if="error"> {{ error }} </span>
-      <button @click="dosync">Do Sync</button>
+      <button
+        class="mt-5 bg-sky-500 hover:bg-sky-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white"
+        @click="dosync"
+      >
+        Do Sync
+      </button>
     </div>
   </div>
 </template>
