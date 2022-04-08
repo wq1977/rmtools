@@ -58,7 +58,7 @@
         </div>
       </div>
       <div class="flex-1">
-        <iframe ref="iframe" class="w-full h-full" />
+        <iframe ref="iframe" style="min-height: 70vh" class="w-full h-full" />
       </div>
     </div>
   </div>
