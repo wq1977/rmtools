@@ -120,10 +120,10 @@ const api = {
       coverImg = await pdfDoc.embedPng(require("fs").readFileSync(book.cover));
     }
     console.log("cover", coverImg.width, coverImg.height);
-    const scale = Math.min(447 / coverImg.width, 596 / coverImg.height);
+    const scale = Math.min(596 / coverImg.width, 795 / coverImg.height);
     const coverDims = coverImg.scale(scale);
     const page = pdfDoc.addPage();
-    page.setSize(447, 596);
+    page.setSize(596, 795);
     page.drawImage(coverImg, {
       x: page.getWidth() / 2 - coverDims.width / 2,
       y: page.getHeight() / 2 - coverDims.height / 2,

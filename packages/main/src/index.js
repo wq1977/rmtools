@@ -1,7 +1,6 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
-import { join } from "path";
 import { URL } from "url";
-import { PDFDocument } from "pdf-lib";
+import html2pdf from "./html2pdf";
 const Config = require("electron-store");
 Config.initRenderer();
 const config = new Config();
@@ -161,7 +160,7 @@ const createWindow = async () => {
     webPreferences: {
       webSecurity: false,
       nativeWindowOpen: true,
-      preload: join(__dirname, "../../preload/dist/index.cjs"),
+      preload: require("path").join(__dirname, "../../preload/dist/index.cjs"),
     },
   };
 
@@ -321,55 +320,5 @@ ipcMain.handle("select-ttf", async () => {
 });
 
 ipcMain.handle("convert-pdf", async function (_, payload) {
-  const { src, output } = payload;
-  const error = await new Promise(async (resolve) => {
-    let win;
-    if (payload.debug) {
-      win = new BrowserWindow({
-        webPreferences: {
-          webSecurity: false,
-        },
-      });
-    } else {
-      win = new BrowserWindow({
-        transparent: true,
-        webPreferences: {
-          webSecurity: false,
-        },
-      });
-      win.hide();
-    }
-    win.loadURL(`${src}?seed=${new Date().getTime()}`);
-    win.webContents.on("did-finish-load", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const data = await win.webContents.printToPDF({
-        marginsType: 1,
-        printBackground: true,
-        pageSize: {
-          width: 157794 - 2 * 10000,
-          height: 210392 - 2 * 10000,
-        },
-      });
-      require("fs").writeFile(output, data, (error) => {
-        if (error) resolve(error);
-        else resolve();
-        if (!payload.debug) win.close();
-      });
-    });
-  });
-  if (!error) {
-    const pdfDoc = await PDFDocument.load(require("fs").readFileSync(output));
-    const pages = pdfDoc.getPages();
-    for (let page of pages) {
-      page.setSize(
-        page.getWidth() + Math.round((72 * 2) / 2.54),
-        page.getHeight() + Math.round((72 * 2) / 2.54)
-      );
-      console.log("page size", page.getWidth(), page.getHeight());
-      page.translateContent(Math.round(72 / 2.54), Math.round(72 / 2.54));
-    }
-    require("fs").writeFileSync(output, await pdfDoc.save());
-  } else {
-    console.log("error:", error);
-  }
+  await html2pdf(payload);
 });
