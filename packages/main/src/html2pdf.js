@@ -35,6 +35,7 @@ export default async (payload) => {
       runJS(win, () => {
         document.body.style.width = "596px";
         document.body.style.padding = "0 1cm";
+        document.body.style.margin = "0";
         document.body.style.boxSizing = "border-box";
         document.body.style.border = "solid 1px black";
       });
@@ -137,6 +138,8 @@ async function saveToPdf(win, output) {
   const doc = new PDFDocument({
     bufferPages: true,
     autoFirstPage: false,
+    size: [596, 795],
+    margin: 0,
   });
   const out = require("fs").createWriteStream(output);
   doc.pipe(out);
@@ -162,7 +165,7 @@ async function saveToPdf(win, output) {
           : "song";
       let pageIdx = Math.floor(elem.rect.top / PAGE_HEIGHT);
       while (doc.bufferedPageRange().count < pageIdx + 1) {
-        doc.addPage({ size: [596, 795], margin: 0 });
+        doc.addPage();
       }
       doc.switchToPage(pageIdx);
       doc.x = elem.rect.left;
