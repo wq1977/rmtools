@@ -47,6 +47,52 @@ export default async (payload) => {
   });
 };
 
+const onecm = 72 / 2.54;
+const PAGE_HEIGHT = Math.round(795 - 2 * onecm);
+
+/**
+ * 合并文本以进一步减小生成的PDF的体积，
+ * 如果连续N行文本在同一页且left和width都相同则合并
+ *
+ * @param {*} doms
+ */
+function mergeDOM(doms) {
+  let result = [];
+  let lastLine;
+  for (let elem of doms) {
+    if (elem.type !== "#text") {
+      result.push(elem);
+      continue;
+    }
+    if (!lastLine) {
+      lastLine = { ...elem };
+      continue;
+    }
+    if (
+      elem.rect.left !== lastLine.rect.left ||
+      elem.rect.width !== lastLine.rect.width ||
+      elem.fontSize !== lastLine.fontSize ||
+      elem.fontFamily !== lastLine.fontFamily ||
+      elem.fontWeight !== lastLine.fontWeight ||
+      Math.floor(elem.rect.top / PAGE_HEIGHT) !=
+        Math.floor(lastLine.rect.top / PAGE_HEIGHT)
+    ) {
+      result.push(lastLine);
+      lastLine = { ...elem };
+      continue;
+    }
+
+    lastLine.content += elem.content;
+    lastLine.lines = (lastLine.lines || 1) + 1;
+    console.log("... mergelines", lastLine.lines);
+    lastLine.rect.height = elem.rect.top + elem.rect.height - lastLine.rect.top;
+  }
+  if (lastLine) {
+    result.push(lastLine);
+  }
+  return result;
+}
+
 /**
  * 将HTML浏览器窗口里的内容保存到PDF里,具体的方法就是，
  * 遍历HTML里面的每一个dom元素，将其放置在HTML对应的位置
@@ -156,8 +202,6 @@ async function saveToPdf(win, output) {
   doc.pipe(out);
 
   // console.log("DPI:", screen.getPrimaryDisplay().scaleFactor);
-  const onecm = 72 / 2.54;
-  const PAGE_HEIGHT = Math.round(795 - 2 * onecm);
   const fonts = {
     kai: "/Users/wesleywang/Library/Fonts/方正楷体_GBK.ttf",
     hei: "/Users/wesleywang/Library/Fonts/fzlth_gbk.ttf",
@@ -166,6 +210,9 @@ async function saveToPdf(win, output) {
   for (let f in fonts) {
     doc.registerFont(f, fonts[f]);
   }
+
+  // const newdom = mergeDOM(doms);
+
   for (let elem of doms) {
     if (elem.type === "#text") {
       const font =
