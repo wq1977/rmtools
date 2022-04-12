@@ -59,9 +59,18 @@ export default async (payload) => {
 async function saveToPdf(win, output) {
   const doms = await runJS(win, () => {
     const result = [];
+    function getDataUrl(img) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL("image/jpeg");
+    }
     function loopNode(node, result) {
+      console.log(node.nodeName);
       if (node.nodeName === "#text") {
-        const str = node.textContent.trim();
+        const str = node.textContent;
         const style = window.getComputedStyle(node.parentNode);
         let height, lastidx;
         var range = document.createRange();
@@ -82,7 +91,7 @@ async function saveToPdf(win, output) {
                   width: bound.width,
                   height: bound.height,
                 },
-                content: str.slice(lastidx),
+                content: str.slice(lastidx).trim(),
                 fontSize: style.fontSize,
                 fontWeight: style.fontWeight,
                 fontFamily: style.fontFamily,
@@ -103,7 +112,7 @@ async function saveToPdf(win, output) {
                 width: bound.width,
                 height: bound.height,
               },
-              content: str.slice(lastidx, i),
+              content: str.slice(lastidx, i).trim(),
               fontSize: style.fontSize,
               fontWeight: style.fontWeight,
               fontFamily: style.fontFamily,
@@ -112,16 +121,18 @@ async function saveToPdf(win, output) {
             height = null;
           }
         }
-      } else if (node.nodeName === "IMG") {
+      } else if (node.nodeName.toUpperCase() === "IMG") {
+        console.log("add img node", node.src);
         const bound = node.getBoundingClientRect();
         result.push({
-          type: node.nodeName,
+          type: node.nodeName.toUpperCase(),
           rect: {
             left: bound.left,
             top: bound.top,
             width: bound.width,
             height: bound.height,
           },
+          data: getDataUrl(node),
           src: node.src,
         });
       }
@@ -185,16 +196,34 @@ async function saveToPdf(win, output) {
     } else if (elem.type === "IMG") {
       let pageIdx = Math.floor(elem.rect.top / PAGE_HEIGHT);
       while (doc.bufferedPageRange().count < pageIdx + 1) {
-        doc.addPage({ size: [596, 795], margin: 0 });
+        doc.addPage();
       }
       doc.switchToPage(pageIdx);
-      doc.x = elem.rect.left;
-      doc.y = (elem.rect.top % PAGE_HEIGHT) + onecm;
-      if (doc.y + elem.rect.height < 790) {
-        doc.image(elem.src.slice(21), {
+      console.log(elem.data, elem.rect.left, elem.rect.width);
+      doc.image(
+        elem.data,
+        elem.rect.left,
+        (elem.rect.top % PAGE_HEIGHT) + onecm,
+        {
           width: elem.rect.width,
           height: elem.rect.height,
-        });
+        }
+      );
+      if ((elem.rect.top % PAGE_HEIGHT) + onecm + elem.rect.height > 795) {
+        pageIdx += 1;
+        if (doc.bufferedPageRange().count < pageIdx + 1) {
+          doc.addPage();
+        }
+        doc.switchToPage(pageIdx);
+        doc.image(
+          elem.data,
+          elem.rect.left,
+          795 - ((elem.rect.top % PAGE_HEIGHT) + onecm + elem.rect.height),
+          {
+            width: elem.rect.width,
+            height: elem.rect.height,
+          }
+        );
       }
     }
   }

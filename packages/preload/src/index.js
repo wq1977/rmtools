@@ -189,8 +189,14 @@ const api = {
         require("path").basename(path).replace(".epub", ".pdf")
       ),
       content: epub.raw.json.opf.spine[0].itemref.map((item) => {
-        const id = item.$.item.$.id;
-        const src = item.$.item.$.href;
+        let id, src;
+        if (item.$.item) {
+          id = item.$.item.$.id;
+          src = item.$.item.$.href;
+        } else {
+          id = item.$.idref;
+          src = item.$.idref;
+        }
         return {
           id,
           src,
