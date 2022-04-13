@@ -7,7 +7,9 @@
       </div>
       <div
         v-for="entry in allEntry.filter(
-          (e) => e.parent === (path.length > 0 ? path[path.length - 1] : '')
+          (e) =>
+            !e.deleted &&
+            e.parent === (path.length > 0 ? path[path.length - 1] : '')
         )"
         @click="entryclick(entry)"
         :key="entry.id"
