@@ -96,11 +96,16 @@ export default async (payload) => {
           document.body.style.margin = "0";
           document.body.style.boxSizing = "border-box";
           document.body.style.border = "solid 1px black";
+          //remove empty block
+          [...document.querySelectorAll("p")].forEach((p) => {
+            if (!p.innerText.trim() && !p.querySelector("img"))
+              p.style.display = "none";
+          });
         },
         PAGE_WIDTH,
         MARGIN_X
       );
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await saveToPdf(win, output);
       if (!payload.debug) win.close();
       resolve(null);
@@ -281,12 +286,18 @@ async function saveToPdf(win, output) {
         doc.addPage();
       }
       doc.switchToPage(pageIdx);
-      doc.x = elem.rect.left;
-      doc.y = elem.pageTop;
       const width = doc
         .font(font)
         .fontSize(parseInt(elem.fontSize))
         .widthOfString(elem.content);
+      const height = doc
+        .font(font)
+        .fontSize(parseInt(elem.fontSize))
+        .heightOfString(
+          elem.content.slice(0, Math.round(elem.content.length / 2))
+        );
+      doc.x = elem.rect.left;
+      doc.y = elem.pageTop + (elem.rect.height - height) / 2;
       doc
         .font(font)
         .fontSize(parseInt(elem.fontSize))
@@ -295,6 +306,9 @@ async function saveToPdf(win, output) {
           characterSpacing:
             (elem.rect.width - width) / (elem.content.length - 1),
         });
+      // doc
+      //   .rect(elem.rect.left, elem.pageTop, elem.rect.width, elem.rect.height)
+      //   .stroke();
     } else if (elem.type === "IMG") {
       let pageIdx = elem.pageIdx;
       while (doc.bufferedPageRange().count < pageIdx + 1) {
