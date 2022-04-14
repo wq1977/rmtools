@@ -101,6 +101,10 @@ export default async (payload) => {
             if (!p.innerText.trim() && !p.querySelector("img"))
               p.style.display = "none";
           });
+          [...document.querySelectorAll("img")].forEach((img) => {
+            img.style.maxWidth = `${pageW - 2 * marginX}px`;
+            img.style.height = "auto";
+          });
         },
         PAGE_WIDTH,
         MARGIN_X
@@ -276,9 +280,9 @@ async function saveToPdf(win, output) {
   for (let elem of newdom) {
     if (elem.type === "#text") {
       const font =
-        elem.fontFamily.indexOf("Hei") >= 0
+        elem.fontFamily.toLowerCase().indexOf("hei") >= 0
           ? "hei"
-          : elem.fontFamily.indexOf("Kai") >= 0
+          : elem.fontFamily.toLowerCase().indexOf("Kai") >= 0
           ? "kai"
           : "song";
       let pageIdx = elem.pageIdx;
@@ -293,9 +297,7 @@ async function saveToPdf(win, output) {
       const height = doc
         .font(font)
         .fontSize(parseInt(elem.fontSize))
-        .heightOfString(
-          elem.content.slice(0, Math.round(elem.content.length / 2))
-        );
+        .heightOfString("中");
       doc.x = elem.rect.left;
       doc.y = elem.pageTop + (elem.rect.height - height) / 2;
       doc
@@ -317,10 +319,6 @@ async function saveToPdf(win, output) {
       doc.switchToPage(pageIdx);
       doc.image(elem.data, elem.rect.left, elem.pageTop, {
         width: Math.min(elem.rect.width, PAGE_WIDTH - 2 * MARGIN_X),
-        height: Math.min(
-          elem.rect.height,
-          PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM - elem.pageTop
-        ),
       });
     }
   }
