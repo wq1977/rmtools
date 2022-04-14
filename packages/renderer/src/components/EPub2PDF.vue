@@ -6,9 +6,6 @@
       <button v-if="book" class="mr-3" @click="doDownload(book)">
         下载全书
       </button>
-      <button v-if="book" @click="showMore = !showMore" class="mr-3">
-        More
-      </button>
       <span v-if="downing">{{ dprogress }} / {{ dtotal }}</span>
     </div>
     <div class="p-5" v-if="showMore">

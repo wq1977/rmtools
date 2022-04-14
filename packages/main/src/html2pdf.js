@@ -115,6 +115,7 @@ export default async (payload) => {
           document.body.style.width = `${pageW}px`;
           document.body.style.padding = `0 ${marginX}px`;
           document.body.style.margin = "0";
+          document.body.style.fontSize = "16px";
           document.body.style.boxSizing = "border-box";
           document.body.style.border = "solid 1px black";
           //remove empty block
@@ -126,6 +127,20 @@ export default async (payload) => {
           [...document.querySelectorAll("img")].forEach((img) => {
             img.style.maxWidth = `${pageW - 2 * marginX}px`;
             img.style.height = "auto";
+          });
+          //adjust p tag style
+          [...document.querySelectorAll("p")].forEach((p) => {
+            const style = window.getComputedStyle(p);
+            if (
+              !style.textAlign ||
+              style.textAlign === "start" ||
+              style.textAlign === "left"
+            ) {
+              p.style.textAlign = "justify";
+            }
+            p.style.lineHeight = "200%";
+            p.style.textIndent = "2em";
+            p.style.marginBottom = "1em";
           });
           //adjust font family
           function loopFont(node) {

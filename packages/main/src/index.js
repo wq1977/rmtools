@@ -75,48 +75,13 @@ koa.use(async (ctx, next) => {
   await next();
 });
 
-function fixCss(html) {
-  if (html.indexOf("<body") > 0) {
-    const defaultStyle = `
-    <style>
-    ${config
-      .get("fonts")
-      .map((font) => {
-        return `@font-face { 
-          font-family: '${font.familyName}';
-          src: url('${font.path}');
-        }`;
-      })
-      .join("\n")}  
-      ${config.get("extraCss") || ""}
-      html {
-        font-family: ${
-          config.get("defaultFont") ||
-          "PingFang SC, Lantinghei SC, Microsoft Yahei, Hiragino Sans GB, Microsoft Sans Serif, WenQuanYi Micro Hei, sans-serif"
-        }
-      }  
-    </style>
-    `;
-    html = html.replace(/<body/i, `${defaultStyle}<body`);
-  }
-  html = html.replace(/line-height:.*;/g, "line-height:200%;");
-  for (let rep of config.get("fontReplace") || []) {
-    html = html.replace(
-      new RegExp(`font-family:.*${rep.from}.*;`),
-      `font-family:${rep.to};`
-    );
-  }
-  html = html.replace(/<html/i, `<html style="font-size: 12pt"`);
-  return html;
-}
-
 koa.use(async (ctx, next) => {
   if (require("fs").existsSync(ctx.path)) {
     var mimeType = mime.lookup(ctx.path);
     console.log(ctx.path, mimeType);
     ctx.response.set("content-type", mimeType);
     if (ctx.path.endsWith("html") || ctx.path.endsWith("css")) {
-      ctx.body = fixCss(require("fs").readFileSync(ctx.path).toString());
+      ctx.body = require("fs").readFileSync(ctx.path).toString();
     } else {
       ctx.body = require("fs").readFileSync(ctx.path);
     }
