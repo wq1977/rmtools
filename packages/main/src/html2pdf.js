@@ -180,6 +180,10 @@ async function saveToPdf(win, output) {
       return canvas.toDataURL("image/jpeg");
     }
     function loopNode(node, result) {
+      try {
+        const style = window.getComputedStyle(node);
+        if (style.display === "none") return;
+      } catch (Ex) {}
       if (node.nodeName === "#text") {
         const str = node.textContent;
         if (str.trim().length <= 0) return; //忽略没有内容的文本
