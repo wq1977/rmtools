@@ -282,7 +282,7 @@ async function saveToPdf(win, output) {
       const font =
         elem.fontFamily.toLowerCase().indexOf("hei") >= 0
           ? "hei"
-          : elem.fontFamily.toLowerCase().indexOf("Kai") >= 0
+          : elem.fontFamily.toLowerCase().indexOf("kai") >= 0
           ? "kai"
           : "song";
       let pageIdx = elem.pageIdx;
