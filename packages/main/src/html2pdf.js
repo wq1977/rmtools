@@ -45,10 +45,11 @@ function layoutPage(doms) {
 
   for (let e of doms) {
     let pageIdx = 0;
+    const domBottom = e.rect.top + e.rect.height;
     for (let i = 0; i < pages.length; i++) {
       if (
-        pages[i] <= e.rect.top &&
-        (i === pages.length - 1 || pages[i + 1] > e.rect.top)
+        pages[i] <= domBottom &&
+        (i === pages.length - 1 || pages[i + 1] > domBottom)
       ) {
         pageIdx = i;
         break;
