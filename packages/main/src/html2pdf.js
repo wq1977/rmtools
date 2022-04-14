@@ -310,7 +310,9 @@ async function saveToPdf(win, output) {
         .text(elem.content, {
           height: elem.rect.height,
           characterSpacing:
-            (elem.rect.width - width) / (elem.content.length - 1),
+            elem.content.length == 1
+              ? 0
+              : (elem.rect.width - width) / (elem.content.length - 1),
         });
       // doc
       //   .rect(elem.rect.left, elem.pageTop, elem.rect.width, elem.rect.height)
