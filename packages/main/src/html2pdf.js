@@ -275,20 +275,29 @@ async function saveToPdf(win, output) {
     hei: "/Users/wesleywang/Library/Fonts/fzlth_gbk.ttf",
     song: "/Users/wesleywang/code/self/crackRM2/FZSSJW.ttf",
   };
+  const fallbackFont = "hei";
+  const ttfs = {};
   for (let f in fonts) {
     doc.registerFont(f, fonts[f]);
+    ttfs[f] = require("fontkit").openSync(fonts[f]);
   }
 
   const newdom = layoutPage(doms);
 
   for (let elem of newdom) {
     if (elem.type === "#text") {
-      const font =
+      let font =
         elem.fontFamily.toLowerCase().indexOf("hei") >= 0
           ? "hei"
           : elem.fontFamily.toLowerCase().indexOf("kai") >= 0
           ? "kai"
           : "song";
+      for (let idx in elem.content) {
+        if (!ttfs[font].hasGlyphForCodePoint(elem.content.codePointAt(idx))) {
+          font = fallbackFont;
+          break;
+        }
+      }
       let pageIdx = elem.pageIdx;
       while (doc.bufferedPageRange().count < pageIdx + 1) {
         doc.addPage();
