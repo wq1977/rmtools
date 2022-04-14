@@ -7,6 +7,11 @@ const onecm = 72 / 2.54;
 const MARGIN_X = onecm;
 const MARGIN_TOP = onecm * 1.5;
 const MARGIN_BOTTOM = onecm;
+const fonts = {
+  kai: "/Users/wesleywang/Library/Fonts/fzkt_GBK.ttf",
+  hei: "/Users/wesleywang/Library/Fonts/fzlth_gbk.ttf",
+  song: "/Users/wesleywang/code/self/crackRM2/FZSSJW.ttf",
+};
 
 /**
  * 函数接收chrome返回的没有分页的dom，然后按照 MARGIN 设定将其合理分页
@@ -90,6 +95,22 @@ export default async (payload) => {
     win.webContents.on("did-finish-load", async () => {
       runJS(
         win,
+        (styles) => {
+          var styleSheet = document.createElement("style");
+          styleSheet.innerHTML = styles;
+          document.head.appendChild(styleSheet);
+        },
+        Object.keys(fonts)
+          .map((font) => {
+            return `@font-face {
+              font-family: "${font}";
+              src: url("http://127.0.0.1:8877${fonts[font]}");
+            }`;
+          })
+          .join("\n")
+      );
+      runJS(
+        win,
         (pageW, marginX) => {
           document.body.style.width = `${pageW}px`;
           document.body.style.padding = `0 ${marginX}px`;
@@ -101,10 +122,28 @@ export default async (payload) => {
             if (!p.innerText.trim() && !p.querySelector("img"))
               p.style.display = "none";
           });
+          //adjust img width and height
           [...document.querySelectorAll("img")].forEach((img) => {
             img.style.maxWidth = `${pageW - 2 * marginX}px`;
             img.style.height = "auto";
           });
+          //adjust font family
+          function loopFont(node) {
+            if (node.nodeName === "#text") {
+              const style = window.getComputedStyle(node.parentNode);
+              let font =
+                style.fontFamily.toLowerCase().indexOf("hei") >= 0
+                  ? "hei"
+                  : style.fontFamily.toLowerCase().indexOf("kai") >= 0
+                  ? "kai"
+                  : "song";
+              node.parentNode.style.fontFamily = font;
+            }
+            [...(node.childNodes || [])].forEach((node) => {
+              loopFont(node);
+            });
+          }
+          loopFont(document.body);
         },
         PAGE_WIDTH,
         MARGIN_X
@@ -270,11 +309,6 @@ async function saveToPdf(win, output) {
   const out = require("fs").createWriteStream(output);
   doc.pipe(out);
 
-  const fonts = {
-    kai: "/Users/wesleywang/Library/Fonts/方正楷体_GBK.ttf",
-    hei: "/Users/wesleywang/Library/Fonts/fzlth_gbk.ttf",
-    song: "/Users/wesleywang/code/self/crackRM2/FZSSJW.ttf",
-  };
   const fallbackFont = "hei";
   const ttfs = {};
   for (let f in fonts) {
