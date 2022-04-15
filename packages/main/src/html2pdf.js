@@ -135,13 +135,16 @@ export default async (payload) => {
             if (
               !style.textAlign ||
               style.textAlign === "start" ||
-              style.textAlign === "left"
+              style.textAlign === "left" ||
+              style.textAlign === "justify"
             ) {
               p.style.textAlign = "justify";
+              p.style.lineHeight = "200%";
+              p.style.textIndent = "2em";
+              p.style.marginBottom = "1em";
+            } else {
+              p.style.marginBottom = "1em";
             }
-            p.style.lineHeight = "200%";
-            p.style.textIndent = "2em";
-            p.style.marginBottom = "1em";
           });
           //adjust font family
           function loopFont(node) {
@@ -243,17 +246,26 @@ async function saveToPdf(win, output) {
         const str = node.textContent;
         if (str.trim().length <= 0) return; //忽略没有内容的文本
         const style = window.getComputedStyle(node.parentNode);
-        let height, lastidx;
+        let height,
+          lastStart = null;
         var range = document.createRange();
         for (let i = 0; i < str.length; i++) {
-          if (!lastidx && lastidx !== 0) {
-            lastidx = i;
+          let bound;
+          if (lastStart === null) {
+            lastStart = i;
+            range.setStart(node, i);
+            range.setEnd(node, i + 1);
+            bound = range.getBoundingClientRect();
+            height = bound.height;
+            continue;
           }
-          range.setStart(node, lastidx);
           range.setEnd(node, i + 1);
-          let bound = range.getBoundingClientRect();
-          if (!height || i === str.length - 1) {
-            if (i === str.length - 1) {
+          bound = range.getBoundingClientRect();
+          if (bound.height !== height) {
+            range.setEnd(node, i);
+            bound = range.getBoundingClientRect();
+            const content = str.slice(lastStart, i).trim();
+            if (content.trim().length > 0) {
               result.push({
                 type: node.nodeName,
                 rect: {
@@ -262,35 +274,36 @@ async function saveToPdf(win, output) {
                   width: bound.width,
                   height: bound.height,
                 },
-                content: str.slice(lastidx).trim(),
+                content,
                 fontSize: style.fontSize,
                 fontWeight: style.fontWeight,
                 fontFamily: style.fontFamily,
               });
-            } else {
-              height = bound.height;
             }
-            continue;
-          }
-          if (bound.height !== height) {
-            range.setEnd(node, i);
+            lastStart = i;
+            range.setStart(node, i);
+            range.setEnd(node, i + 1);
             bound = range.getBoundingClientRect();
-            result.push({
-              type: node.nodeName,
-              rect: {
-                left: bound.left,
-                top: bound.top,
-                width: bound.width,
-                height: bound.height,
-              },
-              content: str.slice(lastidx, i).trim(),
-              fontSize: style.fontSize,
-              fontWeight: style.fontWeight,
-              fontFamily: style.fontFamily,
-            });
-            lastidx = i;
-            height = null;
+            height = bound.height;
           }
+        }
+        range.setEnd(node, str.length);
+        bound = range.getBoundingClientRect();
+        const content = str.slice(lastStart).trim();
+        if (content.trim().length > 0) {
+          result.push({
+            type: node.nodeName,
+            rect: {
+              left: bound.left,
+              top: bound.top,
+              width: bound.width,
+              height: bound.height,
+            },
+            content,
+            fontSize: style.fontSize,
+            fontWeight: style.fontWeight,
+            fontFamily: style.fontFamily,
+          });
         }
       } else if (node.nodeName.toUpperCase() === "IMG") {
         const bound = node.getBoundingClientRect();
@@ -361,6 +374,9 @@ async function saveToPdf(win, output) {
         .font(font)
         .fontSize(parseInt(elem.fontSize))
         .heightOfString("中");
+      if (elem.content.indexOf("（原文") >= 0) {
+        console.log("原文", elem.rect, width, height);
+      }
       doc.x = elem.rect.left;
       doc.y = elem.pageTop + (elem.rect.height - height) / 2;
       doc
