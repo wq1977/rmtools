@@ -142,6 +142,7 @@ export default async (payload) => {
               p.style.lineHeight = "200%";
               p.style.textIndent = "2em";
               p.style.marginBottom = "1em";
+              p.style.fontSize = "1em";
             } else {
               p.style.marginBottom = "1em";
             }
