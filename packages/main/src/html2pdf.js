@@ -399,9 +399,11 @@ async function saveToPdf(win, output) {
         doc.addPage();
       }
       doc.switchToPage(pageIdx);
-      doc.image(elem.data, elem.rect.left, elem.pageTop, {
-        width: Math.min(elem.rect.width, PAGE_WIDTH - 2 * MARGIN_X),
-      });
+      if (/^data:.+;base64,(.*)$/.exec(elem.data)) {
+        doc.image(elem.data, elem.rect.left, elem.pageTop, {
+          width: Math.min(elem.rect.width, PAGE_WIDTH - 2 * MARGIN_X),
+        });
+      }
     }
   }
   doc.end();
