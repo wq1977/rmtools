@@ -103,12 +103,12 @@ const api = {
     zip.extractAllTo(out, true);
   },
 
-  async convertPartPdf(src, output, debug = false) {
+  async convertPartPdf(src, output, debug = false, extraCSS = "") {
     const dir = require("path").dirname(output);
     if (!require("fs").existsSync(dir)) {
       require("fs").mkdirSync(dir);
     }
-    await ipcRenderer.invoke("convert-pdf", { src, output, debug });
+    await ipcRenderer.invoke("convert-pdf", { src, output, debug, extraCSS });
   },
   async download(book, progress) {
     const pdfDoc = await PDFDocument.create();
@@ -135,7 +135,7 @@ const api = {
       progress(idx, book.content.length);
       if (item.id.indexOf("titlepage") >= 0) continue;
       console.log("progress:", item.label);
-      const path = await api.itemPdfPath(item);
+      const path = await api.itemPdfPath({ ...item, extraCSS: book.extraCSS });
       const pdfA = await PDFDocument.load(
         require("fs").readFileSync(path.substr(7))
       );
@@ -145,7 +145,7 @@ const api = {
     require("fs").writeFileSync(book.output, await pdfDoc.save());
   },
   async itemPdfPath(item) {
-    const { id, base, src, tempbase } = item;
+    const { id, base, src, tempbase, extraCSS } = item;
     const tempPDF = require("path").join(tempbase, "pdf");
     const pdfPath = require("path").join(tempPDF, `${id}.pdf`);
     if (!require("fs").existsSync(pdfPath)) {
@@ -153,7 +153,8 @@ const api = {
       await api.convertPartPdf(
         `http://127.0.0.1:8877${tempEpub}/${base}${src}`,
         pdfPath,
-        item.debug
+        item.debug,
+        extraCSS
       );
     }
     return `file://${pdfPath}`;

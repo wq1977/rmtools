@@ -77,7 +77,7 @@ function layoutPage(doms) {
  * @param {*} output
  */
 export default async (payload) => {
-  const { src, output } = payload;
+  const { src, output, extraCSS } = payload;
   await new Promise(async (resolve) => {
     let win;
     if (payload.debug) {
@@ -111,7 +111,7 @@ export default async (payload) => {
               src: url("http://127.0.0.1:8877${fonts[font]}");
             }`;
           })
-          .join("\n")
+          .join("\n") + `\n${extraCSS || ""}`
       );
       runJS(
         win,

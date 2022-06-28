@@ -6,6 +6,7 @@
       <button v-if="book" class="mr-3" @click="doDownload(book)">
         下载全书
       </button>
+      <button class="mr-3" @click="showMore = !showMore">More</button>
       <span v-if="downing">{{ dprogress }} / {{ dtotal }}</span>
     </div>
     <div class="p-5" v-if="showMore">
@@ -13,32 +14,13 @@
         class="table-auto border-collapse border border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-800 shadow-sm"
       >
         <tr>
-          <td class="border border-slate-300">默认字体:</td>
-          <td class="border border-slate-300">
-            <select
-              v-model="defaultFont"
-              @change="setDefault"
-              class="mr-3"
-              v-if="book"
-            >
-              <option
-                :value="font.familyName"
-                :key="font.familyName"
-                v-for="font in fonts"
-              >
-                {{ font.familyName }}
-              </option>
-            </select>
-          </td>
-        </tr>
-        <tr>
           <td class="border border-slate-300">额外样式：</td>
           <td class="border border-slate-300">
             <textarea
               @change="setec"
               v-model="extraCss"
               rows="5"
-              class="w-96"
+              class="w-96 p-2"
             ></textarea>
           </td>
         </tr>
@@ -116,6 +98,7 @@ export default {
         {
           ...book,
           content: book.content.map((i) => ({ ...i })),
+          extraCSS: this.extraCss,
         },
         (p, t) => {
           this.dprogress = p;
@@ -137,7 +120,11 @@ export default {
       }
     },
     async openBook(item) {
-      this.$refs.iframe.src = await this.itemPdfPath({ ...item, debug: true });
+      this.$refs.iframe.src = await this.itemPdfPath({
+        ...item,
+        debug: true,
+        extraCSS: this.extraCss,
+      });
     },
   },
 };
