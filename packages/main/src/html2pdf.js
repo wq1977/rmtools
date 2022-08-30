@@ -11,9 +11,9 @@ const fonts = {
   // kai: "/Users/wesleywang/Library/Fonts/fzkt_GBK.ttf",
   // hei: "/Users/wesleywang/Library/Fonts/fzlth_gbk.ttf",
   // song: "/Users/wesleywang/code/self/crackRM2/FZSSJW.ttf",
-  kai: "/Users/wesleywang/Library/Fonts/LXGWWenKaiMono-Light.ttf",
-  hei: "/Users/wesleywang/Library/Fonts/LXGWWenKaiMono-Bold.ttf",
-  song: "/Users/wesleywang/Library/Fonts/LXGWWenKaiMono-Regular.ttf",
+  kai: "/Users/wwq/Library/Fonts/LXGWWenKaiMono-Light.ttf",
+  hei: "/Users/wwq/Library/Fonts/LXGWWenKaiMono-Bold.ttf",
+  song: "/Users/wwq/Library/Fonts/LXGWWenKaiMono-Regular.ttf",
 };
 
 /**
